@@ -64,7 +64,7 @@ All options are in the **Options** box in the panel. They can be combined freely
 
 | Option | Default | Description |
 |---|---|---|
-| **Scale to Fit Face Size** | Off | Uniformly scales the instance so its reference face matches the world-space area of the target face. Useful when duplicates were scaled non-uniformly before baking. |
+| **Scale to Fit Face Size** | Off | Uniformly scales the instance so its reference face matches the world-space area of the target face. Useful when duplicates were scaled up or down before baking. |
 | **Align Origins** | Off | After face alignment, shifts the instance so its object origin sits at the baked duplicate's origin. The rotation and scale from face alignment are preserved — only the translation changes. Best combined with Scale to Fit. |
 | **Fit to Bounding Box** | Off | Applies a per-axis (non-uniform) scale so the instance's world-space bounding box matches the baked duplicate's bounding box. Use this when duplicates have different proportions from the canonical (e.g. same width but taller). Runs after the other two options. |
 
