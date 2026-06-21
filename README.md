@@ -12,7 +12,7 @@ Exporting and re-importing an instanced object can destroy instance relationship
 
 1. Download `face_instance_align.py`
 2. In Blender: `Edit > Preferences > Add-ons > Install`
-3. Select the file and enable **Face Instance Aligner**
+3. Select the file and enable **Instance Unbaker**
 4. The panel appears in the **Instance Unbaker** tab of the 3D Viewport sidebar (`N`)
 
 ---
