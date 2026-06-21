@@ -2,7 +2,7 @@
 
 A Blender addon that replaces baked (non-instanced) duplicate objects with proper linked instances of a canonical mesh, aligned via face-pair selection.
 
-Exporting and re-importing an instanced object can destroy instance relationships, and while sepetating by loos pieces can re-construct the objects, linked relations are lost resulting in bigger file sizes. This addon helps reverse that: point it at a matching face on the canonical and the baked duplicate, and it spawns a correctly-placed linked instance in one click.
+Exporting and re-importing an instanced object can destroy instance relationships, and while sepetating by loose pieces can re-construct individual objects, linked relations are lost resulting in bigger file sizes. This addon helps reverse that: point it at a matching face on the canonical and the baked duplicate, and it spawns a correctly-placed linked instance in one click.
 
 **Blender 3.0+** | Panel: `View3D > Sidebar > Instance Unbaker`
 
