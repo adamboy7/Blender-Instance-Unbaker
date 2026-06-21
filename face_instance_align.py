@@ -137,11 +137,21 @@ def _get_face_frame_from_edit_mesh(obj):
     # mat_world.to_3x3(), but the inverse-transpose is always correct.)
     normal_ws = (mat_world.inverted().transposed().to_3x3() @ normal_local).normalized()
 
-    # Tangent: first-vertex direction projected onto face plane
-    raw_tangent = verts_ws[0] - centre
+    # Tangent: first vertex direction (from centre) projected onto face plane.
+    # Loop all vertices as fallback in case early ones coincide with the centre.
+    raw_tangent = Vector((0.0, 0.0, 0.0))
+    for v in verts_ws:
+        candidate = v - centre
+        if candidate.length >= 1e-8:
+            raw_tangent = candidate
+            break
     if raw_tangent.length < 1e-8:
-        raw_tangent = verts_ws[1] - centre
-    tangent = (raw_tangent - raw_tangent.project(normal_ws)).normalized()
+        return None, None, "Face is degenerate: all vertices coincide at the centre"
+
+    projected = raw_tangent - raw_tangent.project(normal_ws)
+    if projected.length < 1e-8:
+        return None, None, "Could not compute a stable tangent (vertex lies along face normal)"
+    tangent = projected.normalized()
 
     binormal = normal_ws.cross(tangent).normalized()
 
@@ -348,8 +358,8 @@ class FACEALIGN_OT_align_instance(bpy.types.Operator):
             return {'CANCELLED'}
 
         canonical_obj = bpy.data.objects.get(canonical_name)
-        if canonical_obj is None:
-            self.report({'ERROR'}, f"Canonical object '{canonical_name}' not found in scene.")
+        if canonical_obj is None or canonical_obj.name not in context.scene.objects:
+            self.report({'ERROR'}, f"Canonical object '{canonical_name}' not found in current scene.")
             return {'CANCELLED'}
 
         Fc_local = props.get_matrix("canonical_face_local_matrix")
@@ -379,6 +389,9 @@ class FACEALIGN_OT_align_instance(bpy.types.Operator):
         # Solving for instance.matrix_world:
         #   M_instance = Fd_world @ inv(Fc_local)
         #
+        if abs(Fc_local.determinant()) < 1e-6:
+            self.report({'ERROR'}, "Canonical face matrix is degenerate. Re-store the canonical face.")
+            return {'CANCELLED'}
         M_instance = Fd_world @ Fc_local.inverted()
 
         # --- Scale-to-fit ---
@@ -399,11 +412,12 @@ class FACEALIGN_OT_align_instance(bpy.types.Operator):
         # This scales the whole object uniformly in its local axes, which
         # is equivalent to scaling about the object origin — but since the
         # face centre IS the object origin after alignment, it stays put.
+        applied_scale: float | None = None
         if props.scale_to_fit:
             can_area = props.canonical_face_area
             if can_area > 1e-12 and dup_area > 1e-12:
-                s = math.sqrt(dup_area / can_area)
-                M_instance = M_instance @ Matrix.Scale(s, 4)
+                applied_scale = math.sqrt(dup_area / can_area)
+                M_instance = M_instance @ Matrix.Scale(applied_scale, 4)
 
         # --- Exit edit mode before object operations ---
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -512,7 +526,9 @@ class FACEALIGN_OT_align_instance(bpy.types.Operator):
         # --- Hide the baked duplicate ---
         dup_obj.hide_set(True)          # viewport hide
         dup_obj.hide_render = True      # render hide too
-        props.hidden_by_tool = (props.hidden_by_tool + "\n" + dup_obj.name).strip("\n")
+        _hidden = {n for n in props.hidden_by_tool.split("\n") if n}
+        _hidden.add(dup_obj.name)
+        props.hidden_by_tool = "\n".join(sorted(_hidden))
 
         # --- Select the new instance ---
         bpy.ops.object.select_all(action='DESELECT')
@@ -521,11 +537,8 @@ class FACEALIGN_OT_align_instance(bpy.types.Operator):
 
         # --- Build status message ---
         notes = []
-        if props.scale_to_fit:
-            can_area = props.canonical_face_area
-            if can_area > 1e-12 and dup_area > 1e-12:
-                s = math.sqrt(dup_area / can_area)
-                notes.append(f"face-scaled ×{s:.4f}")
+        if applied_scale is not None:
+            notes.append(f"face-scaled ×{applied_scale:.4f}")
         if props.align_origins:
             notes.append("origin aligned")
         if bb_scale_applied:
