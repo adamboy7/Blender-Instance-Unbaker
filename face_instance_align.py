@@ -1,8 +1,13 @@
 """
-Face Instance Aligner - Blender Addon
-======================================
+Instance Unbaker - Blender Addon
+=================================
 Replaces baked (non-instanced) duplicate objects with proper linked
 instances of a canonical mesh, aligned via face-pair selection.
+
+Blender's "Realize Instances" and similar bake operations destroy instance
+relationships, leaving independent mesh copies. This addon reverses that:
+pick a matching face on the canonical and on the baked duplicate, and a
+correctly-placed linked instance is spawned in one click.
 
 WORKFLOW:
   1. Enter Edit Mode on the CANONICAL object, select exactly ONE face,
@@ -48,15 +53,15 @@ COLLECTION:
 """
 
 bl_info = {
-    "name": "Face Instance Aligner",
+    "name": "Instance Unbaker",
     "author": "adamboy7",
     "version": (1, 7, 0),
     "blender": (3, 0, 0),
-    "location": "View3D > Sidebar > Face Align",
+    "location": "View3D > Sidebar > Instance Unbaker",
     "description": (
-        "Select matching faces on a canonical and non-instanced mesh "
-        "to spawn a linked instance with precise face-to-face alignment, "
-        "then hide the duplicate."
+        "Reverse baked instances: select matching faces on a canonical mesh "
+        "and a baked duplicate to spawn a linked instance with precise "
+        "face-to-face alignment, then hide the duplicate."
     ),
     "category": "Object",
 }
@@ -688,11 +693,11 @@ class FACEALIGN_OT_focus_canonical(bpy.types.Operator):
 # ---------------------------------------------------------------------------
 
 class FACEALIGN_PT_main(bpy.types.Panel):
-    bl_label = "Face Instance Aligner"
+    bl_label = "Instance Unbaker"
     bl_idname = "FACEALIGN_PT_main"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "Face Align"
+    bl_category = "Instance Unbaker"
 
     def draw(self, context):
         layout = self.layout
